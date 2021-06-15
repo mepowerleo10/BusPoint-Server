@@ -22,6 +22,10 @@ class Route(models.Model):
 
     def __str__(self):
         return self.name
+        
+    def __eq__(self, other):
+        if other != None:
+            return self.__dict__ == other.__dict__
 
 class StopInfo(models.Model):
     stop = models.ForeignKey(Stop, on_delete=models.CASCADE)
