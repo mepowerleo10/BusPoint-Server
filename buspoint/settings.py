@@ -130,3 +130,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SERIALIZATION_MODULES = {
 	'jsonfull': 'django_full_serializer'
 }
+
+REST_FRAMEWORK = {
+    'DATETIME_FORMAT': "%Y-%m-%d %H:%M:%S.%f",
+}
