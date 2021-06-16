@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Route, Stop
+from .models import Route, Stop, Journey
 
 class StopSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -11,3 +11,9 @@ class RouteSerializer(serializers.ModelSerializer):
         model = Route
         fields = '__all__'
         depth = 2
+
+class JourneySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Journey
+        fields = '__all__'
+        depth = 1

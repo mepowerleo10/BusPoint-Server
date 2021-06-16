@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-3^ofhc&mezqyga%ebhmnu*@$2kg!e1a7qu%+)!#3!5sj^mujg2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.28.238', '192.168.0.102', '127.0.0.1', '0.0.0.0']
 
 
 # Application definition
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'sortedm2m',
 ]
 
 MIDDLEWARE = [
@@ -125,3 +126,7 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SERIALIZATION_MODULES = {
+	'jsonfull': 'django_full_serializer'
+}

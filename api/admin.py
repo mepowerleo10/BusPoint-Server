@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.forms import ModelForm
-from .models import Route, Stop, StopInfo
+from .models import Route, Stop, StopInfo, Journey
 
 # Register your models here.
 
@@ -33,3 +33,5 @@ class StopAdmin(admin.ModelAdmin):
 # admin.site.register(Route)
 # admin.site.register(Stop)
 # admin.site.register(StopInfo)
+
+admin.site.register(Journey)

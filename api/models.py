@@ -1,5 +1,7 @@
 from django.db import models
+import datetime
 from .enums import RouteColors
+from sortedm2m.fields import SortedManyToManyField
 
 # Create your models here.
 class Stop(models.Model):
@@ -31,3 +33,20 @@ class StopInfo(models.Model):
     stop = models.ForeignKey(Stop, on_delete=models.CASCADE)
     route = models.ForeignKey(Route, on_delete=models.CASCADE)
     order = models.PositiveIntegerField()
+
+class Journey(models.Model):
+    """ def __init__(self, start_stop, final_stop, mid_stop, notify_stops, routes, cost):
+        self.start_stop = start_stop
+        self.final_stop = final_stop
+        self.mid_stop = mid_stop
+        self.notify_stops = notify_stops
+        self.routes = routes
+        self.cost = cost """
+    date = models.DateField(auto_now_add=True, blank=True)
+    start_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="start_stop")
+    final_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="final_stop")
+    mid_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="mid_stop")
+    notify_stops = SortedManyToManyField(Stop, related_name="notify_stops")
+    routing_stops = SortedManyToManyField(Stop, related_name="routing_stops")
+    routes = SortedManyToManyField(Route, related_name="routes")
+    cost = models.FloatField(max_length=5)
