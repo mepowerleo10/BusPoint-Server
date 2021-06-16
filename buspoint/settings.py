@@ -132,5 +132,5 @@ SERIALIZATION_MODULES = {
 }
 
 REST_FRAMEWORK = {
-    'DATETIME_FORMAT': "%Y-%m-%d %H:%M:%S.%f",
+    'DATETIME_FORMAT': "%Y-%m-%d %H:%M:%S",
 }
