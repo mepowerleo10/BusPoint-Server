@@ -42,7 +42,7 @@ class Journey(models.Model):
         self.notify_stops = notify_stops
         self.routes = routes
         self.cost = cost """
-    date = models.DateField(auto_now_add=True, blank=True)
+    date = models.DateTimeField(auto_now_add=True, blank=True)
     start_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="start_stop")
     final_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="final_stop")
     mid_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="mid_stop")
