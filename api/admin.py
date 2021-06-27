@@ -7,7 +7,7 @@ from .models import Route, Stop, StopInfo, Journey
 @admin.register(Route)
 class RouteAdmin(admin.ModelAdmin):
     search_fields = ['name', 'start_point__name', 'end_point__name']
-    fields = ('name', 'start_point', 'end_point', 'first_stripe', 'last_stripe')
+    fields = ('name', 'start_point', 'end_point', 'first_stripe', 'last_stripe', 'forward')
     ordering = ['start_point', 'end_point']
 
 

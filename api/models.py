@@ -15,8 +15,8 @@ class Stop(models.Model):
 
 class Route(models.Model):
     name = models.CharField(max_length=80)
-    start_point = models.OneToOneField(Stop, on_delete=models.CASCADE, related_name="start_point")
-    end_point = models.OneToOneField(Stop, on_delete=models.CASCADE, related_name="end_point")
+    start_point = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="start_point")
+    end_point = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="end_point")
     forward = models.BooleanField(default=True)
     bus_stops = models.ManyToManyField(Stop, through='StopInfo' ,related_name="bus_stops")
     first_stripe = models.CharField(choices=RouteColors.choices(), default=RouteColors.WHITE, max_length=9)
@@ -25,9 +25,9 @@ class Route(models.Model):
     def __str__(self):
         return self.name
         
-    def __eq__(self, other):
+    """ def __eq__(self, other):
         if other != None:
-            return self.__dict__ == other.__dict__
+            return self.__dict__ == other.__dict__ """
 
 class StopInfo(models.Model):
     stop = models.ForeignKey(Stop, on_delete=models.CASCADE)
