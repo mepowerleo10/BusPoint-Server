@@ -82,12 +82,15 @@ def get_route(request):
     notify_stops.append(start_route.bus_stops.all()[len(start_route.bus_stops.all()) - 2])
     if multiple_routes:
         cost = 1000
-        for s in start_route.bus_stops.all():
-            locations.append([s.lon, s.lat])
-            bus_stops.append(s)
-            print("Adding: ", s.name)
-            if (s.lat == mid_stop.lat) and (s.lon == mid_stop.lon):
-                print("Broke at: ", s)
+        start_stops = start_route.bus_stops.all()
+        size = start_stops.count()
+        for i in range(0, size, 1):
+            locations.append([start_stops[i].lon, start_stops[i].lat])
+            bus_stops.append(start_stops[i])
+            print("Adding: ", start_stops[i].name)
+            if (start_stops[i].lat == mid_stop.lat) and (start_stops[i].lon == mid_stop.lon):
+                notify_stops.append(start_stops[i - 1])
+                print("Broke at: ", start_stops[i])
                 break
             
         # print(final_route.bus_stops.all())
@@ -106,13 +109,14 @@ def get_route(request):
             locations.append([final_stops[i].lon, final_stops[i].lat])
             if (final_stops[i].lat == float(final_stop[0])) and (final_stops[i].lon == float(final_stop[1])):
                 notify_stops.append(final_stops[i+1])
-                print("Broke at: ", s)
+                print("Broke at: ", final_stops[i])
                 break
     else:
         cost = 500
         routes = [final_route]
         for r in start_route.bus_stops.all():
             locations.append([r.lon, r.lat])
+            bus_stops.append(r)
             if (r.lat == float(final_stop[0])) and (r.lon == float(final_stop[1])):
                 print("Broke at: ", r)
                 break
