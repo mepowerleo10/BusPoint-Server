@@ -45,7 +45,7 @@ class Journey(models.Model):
     date = models.DateTimeField(auto_now_add=True, blank=True)
     start_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="start_stop")
     final_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="final_stop")
-    mid_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="mid_stop")
+    mid_stop = models.ForeignKey(Stop, null=True, on_delete=models.CASCADE, related_name="mid_stop")
     notify_stops = SortedManyToManyField(Stop, related_name="notify_stops")
     routing_stops = SortedManyToManyField(Stop, related_name="routing_stops")
     routes = SortedManyToManyField(Route, related_name="routes")
