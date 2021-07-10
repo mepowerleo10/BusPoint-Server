@@ -9,6 +9,7 @@ from django.conf import settings
 from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotAllowed, JsonResponse)
 from django.shortcuts import render
+from django.views.decorators.clickjacking import xframe_options_exempt
 from rest_framework import viewsets, generics
 from routingpy import ORS, Graphhopper
 
@@ -38,6 +39,7 @@ def upload_stops(request):
         )
     return HttpResponse("Data set loaded")
 
+@xframe_options_exempt
 def get_route(request):
     if request.method != "GET":
         return HttpResponseNotAllowed("Methods other than GET not allowed")
@@ -113,12 +115,17 @@ def get_route(request):
                 break
     else:
         cost = 500
+        mid_stop = None
         routes = [final_route]
-        for r in start_route.bus_stops.all():
-            locations.append([r.lon, r.lat])
-            bus_stops.append(r)
-            if (r.lat == float(final_stop[0])) and (r.lon == float(final_stop[1])):
-                print("Broke at: ", r)
+        stops = final_route.bus_stops.all()
+        size = stops.count()
+        for i in range(0, size, 1):
+            locations.append([stops[i].lon, stops[i].lat])
+            bus_stops.append(stops[i])
+            print("Adding: ", stops[i].name)
+            if (stops[i].lat == float(final_stop[0])) and (stops[i].lon == float(final_stop[1])):
+                notify_stops.append(stops[i - 1])
+                print("Broke at: ", stops[i])
                 break
 
     print(locations)
