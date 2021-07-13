@@ -43,6 +43,8 @@ class Journey(models.Model):
         self.routes = routes
         self.cost = cost """
     date = models.DateTimeField(auto_now_add=True, blank=True)
+    # location_name = models.CharField(max_length=50)
+    # destination_name = models.CharField(max_length=50)
     start_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="start_stop")
     final_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, related_name="final_stop")
     mid_stop = models.ForeignKey(Stop, null=True, on_delete=models.CASCADE, related_name="mid_stop")
@@ -50,3 +52,4 @@ class Journey(models.Model):
     routing_stops = SortedManyToManyField(Stop, related_name="routing_stops")
     routes = SortedManyToManyField(Route, related_name="routes")
     cost = models.FloatField(max_length=5)
+    directions = models.JSONField(default="")
