@@ -135,12 +135,14 @@ def get_route(request):
         retry_over_query_limit=False,
     )
 
-    """ calculated_route = routing_client.directions(
+    # calculating the route
+    resp_route = routing_client.directions(
         locations=locations,
         profile='driving-car',
-        instructions=True,
+        instructions=False,
         continue_straight=True
-    ) """
+    )
+    calculated_route = {"geometry": resp_route.geometry, "distance": resp_route.distance, "duration": resp_route.duration}
 
     # journey = Journey
     start_stop_obj = Stop.objects.filter(lat=start_stop[0], lon=start_stop[1]).first()
@@ -150,7 +152,8 @@ def get_route(request):
         start_stop=start_stop_obj,
         final_stop=final_stop_obj,
         mid_stop=mid_stop,
-        cost=cost
+        cost=cost,
+        directions=calculated_route,
     )
     for s in notify_stops:
         journey.notify_stops.add(s)
@@ -163,6 +166,10 @@ def get_route(request):
 
     # return JsonResponse(Journey.objects.filter(id=journey.id).all(), safe=False)
     return JsonResponse(serializer.data, safe=False)
+
+def get_latest_journey(request):
+    journey = Journey.objects.all().last()
+    return JsonResponse(json.dumps(journey.directions), safe=False)
 
 class GetRoute(generics.ListAPIView):
     serializer_class = JourneySerializer
