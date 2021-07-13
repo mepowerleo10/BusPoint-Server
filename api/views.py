@@ -3,17 +3,19 @@ import io
 import json
 import os
 
+from decimal import *
+
 import overpy
 from django.core import serializers
 from django.conf import settings
 from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotAllowed, JsonResponse)
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views.decorators.clickjacking import xframe_options_exempt
 from rest_framework import viewsets, generics
 from routingpy import ORS, Graphhopper
 
-from .models import Route, Stop, Journey
+from .models import Route, Stop, Journey, StopWeight
 from .serializers import RouteSerializer, StopSerializer, JourneySerializer
 
 
@@ -62,9 +64,12 @@ def get_route(request):
     # find the destination route
     final_route = Route.objects.filter(bus_stops__lat=final_stop[0])
     final_route = final_route.filter(bus_stops__lon=final_stop[1]).first()
+
+    print("Start Route: ", start_route)
+    print("Final Route: ", final_route)
     
     if (start_route == None) or (final_route == None):
-        return Http404("Start/Final Stop not in any route")
+        raise Http404("Start/Final Stop not in any route")
 
     # the stops are in a route, calculate the waypoints
     common_stops = []
@@ -79,12 +84,14 @@ def get_route(request):
 
     routes = [start_route, final_route]
     cost = 0
-
+    
     notify_stops = []
-    notify_stops.append(start_route.bus_stops.all()[len(start_route.bus_stops.all()) - 2])
+    notify_stops.append(start_route.bus_stops.all()[len(start_route.bus_stops.all()) - 1])
     if multiple_routes:
         cost = 1000
-        start_stops = start_route.bus_stops.all()
+        start_stops = start_route.bus_stops.filter(
+            stopinfo__weight=StopWeight.ROUTABLE
+        ).all()
         size = start_stops.count()
         for i in range(0, size, 1):
             locations.append([start_stops[i].lon, start_stops[i].lat])
@@ -96,9 +103,13 @@ def get_route(request):
                 break
             
         # print(final_route.bus_stops.all())
+        locations.append([mid_stop.lat, mid_stop.lon])
+        bus_stops.append(mid_stop)
         
         # final_route.bus_stops.reverse()
-        final_stops = final_route.bus_stops.all()
+        final_stops = final_route.bus_stops.filter(
+            stopinfo__weight=StopWeight.ROUTABLE
+        ).all()
         size = final_stops.count()
         print(size)
         for i in range(size - 1,0,-1):
@@ -117,7 +128,9 @@ def get_route(request):
         cost = 500
         mid_stop = None
         routes = [final_route]
-        stops = final_route.bus_stops.all()
+        stops = final_route.bus_stops.filter(
+            stopinfo__weight=StopWeight.ROUTABLE
+        ).all()
         size = stops.count()
         for i in range(0, size, 1):
             locations.append([stops[i].lon, stops[i].lat])
@@ -130,7 +143,7 @@ def get_route(request):
 
     print(locations)
 
-    routing_client = ORS(
+    """ routing_client = ORS(
         api_key="5b3ce3597851110001cf62483a24528b22554895b20e36724d991206",
         retry_over_query_limit=False,
     )
@@ -142,18 +155,21 @@ def get_route(request):
         instructions=False,
         continue_straight=True
     )
-    calculated_route = {"geometry": resp_route.geometry, "distance": resp_route.distance, "duration": resp_route.duration}
+    calculated_route = {"geometry": resp_route.geometry, "distance": resp_route.distance, "duration": resp_route.duration} """
 
     # journey = Journey
     start_stop_obj = Stop.objects.filter(lat=start_stop[0], lon=start_stop[1]).first()
     final_stop_obj = Stop.objects.filter(lat=final_stop[0], lon=final_stop[1]).first()
+
+    # bus_stops.insert(0, start_stop_obj)
+    bus_stops.append(final_stop_obj)
+    print("Routing Stops: ", bus_stops)
 
     journey = Journey.objects.create(
         start_stop=start_stop_obj,
         final_stop=final_stop_obj,
         mid_stop=mid_stop,
         cost=cost,
-        directions=calculated_route,
     )
     for s in notify_stops:
         journey.notify_stops.add(s)
@@ -165,7 +181,7 @@ def get_route(request):
     serializer = JourneySerializer(Journey.objects.filter(id=journey.id).first())
 
     # return JsonResponse(Journey.objects.filter(id=journey.id).all(), safe=False)
-    return JsonResponse(serializer.data, safe=False)
+    return JsonResponse(serializer.data, safe=True)
 
 def get_latest_journey(request):
     journey = Journey.objects.all().last()
@@ -290,6 +306,10 @@ def getStartAndFinalStops(start_stop, overpassApi, final_stop):
     result = overpassApi.query(q)
     final_stop = (result.nodes[0].lat, result.nodes[0].lon)
     print("End: ", final_stop)
+
+    start_stop = (start_stop[0].normalize(), start_stop[1].normalize())
+    final_stop = (final_stop[0].normalize(), final_stop[1].normalize())
+    print(start_stop)
     return start_stop, final_stop
 
 def intersection(routeA, routeB):
