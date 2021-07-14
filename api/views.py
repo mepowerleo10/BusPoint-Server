@@ -13,7 +13,8 @@ from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.clickjacking import xframe_options_exempt
 from rest_framework import viewsets, generics
-from routingpy import ORS, Graphhopper
+
+from haversine import haversine, haversine_vector, Unit
 
 from .models import Route, Stop, Journey, StopWeight
 from .serializers import RouteSerializer, StopSerializer, JourneySerializer
@@ -143,20 +144,6 @@ def get_route(request):
 
     print(locations)
 
-    """ routing_client = ORS(
-        api_key="5b3ce3597851110001cf62483a24528b22554895b20e36724d991206",
-        retry_over_query_limit=False,
-    )
-
-    # calculating the route
-    resp_route = routing_client.directions(
-        locations=locations,
-        profile='driving-car',
-        instructions=False,
-        continue_straight=True
-    )
-    calculated_route = {"geometry": resp_route.geometry, "distance": resp_route.distance, "duration": resp_route.duration} """
-
     # journey = Journey
     start_stop_obj = Stop.objects.filter(lat=start_stop[0], lon=start_stop[1]).first()
     final_stop_obj = Stop.objects.filter(lat=final_stop[0], lon=final_stop[1]).first()
@@ -179,8 +166,6 @@ def get_route(request):
         journey.routing_stops.add(s)
     journey.save()
     serializer = JourneySerializer(Journey.objects.filter(id=journey.id).first())
-
-    # return JsonResponse(Journey.objects.filter(id=journey.id).all(), safe=False)
     return JsonResponse(serializer.data, safe=True)
 
 def get_latest_journey(request):
@@ -296,7 +281,7 @@ class GetRoute(generics.ListAPIView):
         journey.save()
 
 def getStartAndFinalStops(start_stop, overpassApi, final_stop):
-    q = "[out:json][timeout:25];(node[\"highway\"=\"bus_stop\"](around:10,{0},{1}););out;>;out skel qt;".format(start_stop[0], start_stop[1])
+    """ q = "[out:json][timeout:25];(node[\"highway\"=\"bus_stop\"](around:10,{0},{1}););out;>;out skel qt;".format(start_stop[0], start_stop[1])
     print(q)
     result = overpassApi.query(q)
     start_stop = (result.nodes[0].lat, result.nodes[0].lon)
@@ -305,12 +290,42 @@ def getStartAndFinalStops(start_stop, overpassApi, final_stop):
     q = "[out:json][timeout:25];(node[\"highway\"=\"bus_stop\"](around:10,{0},{1}););out;>;out skel qt;".format(final_stop[0], final_stop[1])
     result = overpassApi.query(q)
     final_stop = (result.nodes[0].lat, result.nodes[0].lon)
-    print("End: ", final_stop)
+    print("End: ", final_stop) """
 
-    start_stop = (start_stop[0].normalize(), start_stop[1].normalize())
-    final_stop = (final_stop[0].normalize(), final_stop[1].normalize())
-    print(start_stop)
-    return start_stop, final_stop
+    start_stop = (
+        Decimal(start_stop[0]).normalize(), 
+        Decimal(start_stop[1]).normalize())
+    final_stop = (
+        Decimal(final_stop[0]).normalize(), 
+        Decimal(final_stop[1]).normalize())
+
+    selectedStartStop = tuple()
+    selectedFinalStop = tuple()
+
+    earthCircumference = 40_030_173.59204115
+
+    startDistance = earthCircumference
+    finalDistance = earthCircumference
+
+    stops = Stop.objects.all()
+    stopLatAndLongs = []
+    for s in stops:
+        currentTuple = (float(s.lat), float(s.lon))
+        calcStartDistance = haversine(
+            start_stop, currentTuple, unit=Unit.METERS)
+        calcFinalDistance = haversine(
+            final_stop, currentTuple, unit=Unit.METERS)
+
+        if calcStartDistance < startDistance:
+            startDistance = calcStartDistance
+            selectedStartStop = (s.lat, s.lon)
+
+        if calcFinalDistance < finalDistance:
+            finalDistance = calcFinalDistance
+            selectedFinalStop = (s.lat, s.lon)
+
+
+    return selectedStartStop, selectedFinalStop
 
 def intersection(routeA, routeB):
     tupA = map(tuple, routeA)

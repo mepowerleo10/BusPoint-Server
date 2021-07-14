@@ -6,10 +6,12 @@ Django==3.2.4
 -e git+https://github.com/tru-software/django-full-serializer@50c646515379319e559d08940b8f5661f89dd738#egg=django_full_serializer
 django-sortedm2m==3.0.2
 djangorestframework==3.12.4
+haversine==2.3.1
 idna==2.10
 isort==5.8.0
 lazy-object-proxy==1.6.0
 mccabe==0.6.1
+numpy==1.21.0
 overpy==0.6
 pylint==2.8.3
 pylint-django==2.4.4
