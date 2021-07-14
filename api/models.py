@@ -66,4 +66,3 @@ class Journey(models.Model):
     routing_stops = SortedManyToManyField(Stop, related_name="routing_stops")
     routes = SortedManyToManyField(Route, related_name="routes")
     cost = models.FloatField(max_length=5)
-    directions = models.JSONField(default="")
