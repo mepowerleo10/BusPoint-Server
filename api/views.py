@@ -113,10 +113,10 @@ def get_route(request):
         ).all()
         stop = Stop.objects.get(lat=final_stop[0], lon=final_stop[1])
         final_stop = StopInfo.objects.get(route=final_route, stop=stop)
-        final_bus_stops = final_stops.filter(stopinfo__order__gte=final_stop.order)
+        final_bus_stops = reversed(final_stops.filter(stopinfo__order__gte=final_stop.order))
+        print(final_bus_stops)
         for s in final_bus_stops:
             bus_stops.append(s)
-        bus_stops = bus_stops.reverse()
         print(bus_stops)
         # size = final_stops.count()
         # print(size)
