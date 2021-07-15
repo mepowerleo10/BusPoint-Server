@@ -155,7 +155,7 @@ def get_route(request):
     final_stop_obj = Stop.objects.filter(lat=final_stop[0], lon=final_stop[1]).first()
 
     # bus_stops.insert(0, start_stop_obj)
-    bus_stops.append(final_stop_obj)
+    # bus_stops.append(final_stop_obj)
     print("Routing Stops: ", bus_stops)
 
     journey = Journey.objects.create(
