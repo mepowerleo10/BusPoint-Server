@@ -113,7 +113,15 @@ def get_route(request):
         ).all()
         size = final_stops.count()
         print(size)
-        for i in range(size - 1,0,-1):
+        if final_route.forward:
+            start = 0
+            final = size
+            inc = 1
+        else:
+            start = size - 1
+            final = -1
+            inc = -1
+        for i in range(start,final,inc):
             print("Adding: ", final_stops[i].name)
             # the mid stop has already been added
             if (final_stops[i].lat == mid_stop.lat) and (final_stops[i].lon == mid_stop.lon):
