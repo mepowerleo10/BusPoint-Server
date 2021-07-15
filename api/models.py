@@ -71,3 +71,4 @@ class Feedback(models.Model):
     date = models.DateTimeField(auto_now_add=True, blank=True)
     user = models.CharField(max_length=10)
     feedback = models.TextField()
+    checked = models.BooleanField(default=False)
