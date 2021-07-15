@@ -110,21 +110,21 @@ def get_route(request):
         ).all()
         stop = Stop.objects.get(lat=final_stop[0], lon=final_stop[1])
         f_stop_info = StopInfo.objects.get(route=final_route, stop=stop)
+        print(final_stops)
         if final_route.forward:
             final_bus_stops = \
-                final_stops.filter(stopinfo__order__lte=f_stop_info.order).distinct()
+                reversed(
+                    final_stops.filter(stopinfo__order__gte=f_stop_info.order).distinct())
         else:
             final_bus_stops = \
-                reversed(
-                    final_stops.filter(stopinfo__order__gte=f_stop_info.order).distinct()
-                )
+                final_stops.filter(stopinfo__order__lte=f_stop_info.order).distinct()
 
         bus_stops = []
         for s in start_bus_stops:
             bus_stops.append(s)
 
-        locations.append([mid_stop.lat, mid_stop.lon])
-        bus_stops.append(mid_stop)
+        # locations.append([mid_stop.lat, mid_stop.lon])
+        # bus_stops.append(mid_stop)
         
         for s in final_bus_stops:
             bus_stops.append(s)
@@ -154,7 +154,7 @@ def get_route(request):
     start_stop_obj = Stop.objects.filter(lat=start_stop[0], lon=start_stop[1]).first()
     final_stop_obj = Stop.objects.filter(lat=final_stop[0], lon=final_stop[1]).first()
 
-    bus_stops.insert(0, start_stop_obj)
+    # bus_stops.insert(0, start_stop_obj)
     bus_stops.append(final_stop_obj)
     print("Routing Stops: ", bus_stops)
 
