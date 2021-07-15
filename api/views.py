@@ -16,7 +16,7 @@ from rest_framework import viewsets, generics
 
 from haversine import haversine, haversine_vector, Unit
 
-from .models import Route, Stop, Journey, StopWeight
+from .models import Route, Stop, Journey, StopWeight, StopInfo
 from .serializers import RouteSerializer, StopSerializer, JourneySerializer
 
 
@@ -111,9 +111,15 @@ def get_route(request):
         final_stops = final_route.bus_stops.filter(
             stopinfo__weight=StopWeight.ROUTABLE
         ).all()
-        size = final_stops.count()
-        print(size)
-        if final_route.forward:
+        stop = Stop.objects.get(lat=final_stop[0], lon=final_stop[1])
+        final_stop = StopInfo.objects.get(route=final_route, stop=stop)
+        final_bus_stops = final_stops.filter(stopinfo__order__gte=final_stop.order)
+        for s in final_bus_stops:
+            bus_stops.append(s)
+        print(bus_stops)
+        # size = final_stops.count()
+        # print(size)
+        """ if final_route.forward:
             start = 0
             final = size
             inc = 1
@@ -132,7 +138,7 @@ def get_route(request):
             if (final_stops[i].lat == final_stop[0]) and (final_stops[i].lon == final_stop[1]):
                 notify_stops.append(final_stops[i+1])
                 print("Broke at: ", final_stops[i])
-                break
+                break """
     else:
         cost = 500
         mid_stop = None
@@ -154,7 +160,7 @@ def get_route(request):
 
     # journey = Journey
     start_stop_obj = Stop.objects.filter(lat=start_stop[0], lon=start_stop[1]).first()
-    final_stop_obj = Stop.objects.filter(lat=final_stop[0], lon=final_stop[1]).first()
+    final_stop_obj = Stop.objects.filter(lat=final_stop.stop.lat, lon=final_stop.stop.lon).first()
 
     # bus_stops.insert(0, start_stop_obj)
     bus_stops.append(final_stop_obj)
