@@ -41,9 +41,9 @@ class JourneyAdmin(admin.ModelAdmin):
 
 @admin.register(Feedback)
 class FeedbackAdmin(admin.ModelAdmin):
-    search_fields = ['feedback', 'user', 'checked']
-    list_display = ('feedback', 'user', 'checked')
-    list_filter = ('checked',)
+    search_fields = ['feedback', 'user', 'checked', 'date']
+    list_display = ('date', 'feedback', 'user', 'checked')
+    list_filter = ('checked', 'date')
 
 # admin.site.register(Route)
 # admin.site.register(Stop)
