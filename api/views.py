@@ -123,8 +123,8 @@ def get_route(request):
         for s in start_bus_stops:
             bus_stops.append(s)
 
-        # locations.append([mid_stop.lat, mid_stop.lon])
-        # bus_stops.append(mid_stop)
+        locations.append([mid_stop.lat, mid_stop.lon])
+        bus_stops.append(mid_stop)
         
         for s in final_bus_stops:
             bus_stops.append(s)
