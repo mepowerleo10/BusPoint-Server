@@ -116,6 +116,7 @@ def get_route(request):
         final_bus_stops = final_stops.filter(stopinfo__order__gte=final_stop.order)
         for s in final_bus_stops:
             bus_stops.append(s)
+        bus_stops = bus_stops.reverse()
         print(bus_stops)
         # size = final_stops.count()
         # print(size)
