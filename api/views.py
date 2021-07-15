@@ -179,8 +179,8 @@ def get_route(request):
 
 
 def feedback(request):
-    received_feedback = request.GET['feedback']
-    user = request.GET['user']
+    received_feedback = request.POST['feedback']
+    user = request.POST['user']
     feedback = Feedback(user=user, feedback=received_feedback)
     feedback.save()
     return HttpResponse("Feedback added successfully!")
