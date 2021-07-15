@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.forms import ModelForm
-from .models import Route, Stop, StopInfo, Journey
+from .models import Route, Stop, StopInfo, Journey, Feedback
 
 # Register your models here.
 
@@ -38,6 +38,12 @@ class JourneyAdmin(admin.ModelAdmin):
     search_fields = ['routes']
     list_display = ('__str__', 'start_stop', 'final_stop', 'mid_stop', 'cost')
     list_filter = ('routes',)
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    search_fields = ['feedback', 'user', 'checked']
+    list_display = ('feedback', 'user', 'checked')
+    list_filter = ('checked',)
 
 # admin.site.register(Route)
 # admin.site.register(Stop)
