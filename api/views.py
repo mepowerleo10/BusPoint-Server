@@ -129,7 +129,7 @@ def get_route(request):
 
             bus_stops.append(final_stops[i])
             locations.append([final_stops[i].lon, final_stops[i].lat])
-            if (final_stops[i].lat == float(final_stop[0])) and (final_stops[i].lon == float(final_stop[1])):
+            if (final_stops[i].lat == final_stop[0]) and (final_stops[i].lon == final_stop[1]):
                 notify_stops.append(final_stops[i+1])
                 print("Broke at: ", final_stops[i])
                 break
