@@ -66,3 +66,8 @@ class Journey(models.Model):
     routing_stops = SortedManyToManyField(Stop, related_name="routing_stops")
     routes = SortedManyToManyField(Route, related_name="routes")
     cost = models.FloatField(max_length=5)
+
+class Feedback(models.Model):
+    date = models.DateTimeField(auto_now_add=True, blank=True)
+    user = models.CharField(max_length=10)
+    feedback = models.TextField()

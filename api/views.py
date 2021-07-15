@@ -16,7 +16,7 @@ from rest_framework import viewsets, generics
 
 from haversine import haversine, haversine_vector, Unit
 
-from .models import Route, Stop, Journey, StopWeight, StopInfo
+from .models import Route, Stop, Journey, StopWeight, StopInfo, Feedback
 from .serializers import RouteSerializer, StopSerializer, JourneySerializer
 
 
@@ -176,6 +176,14 @@ def get_route(request):
     journey.save()
     serializer = JourneySerializer(Journey.objects.filter(id=journey.id).first())
     return JsonResponse(serializer.data, safe=True)
+
+
+def feedback(request):
+    received_feedback = request.GET['feedback']
+    user = request.GET['user']
+    feedback = Feedback(user=user, feedback=received_feedback)
+    feedback.save()
+    return HttpResponse("Feedback added successfully!")
 
 def get_latest_journey(request):
     journey = Journey.objects.all().last()
