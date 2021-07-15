@@ -113,11 +113,11 @@ def get_route(request):
         print(final_stops)
         if final_route.forward:
             final_bus_stops = \
-                reversed(
-                    final_stops.filter(stopinfo__order__gte=f_stop_info.order).distinct())
+                final_stops.filter(stopinfo__order__lte=f_stop_info.order).distinct()
         else:
             final_bus_stops = \
-                final_stops.filter(stopinfo__order__lte=f_stop_info.order).distinct()
+                reversed(
+                    final_stops.filter(stopinfo__order__gte=f_stop_info.order).distinct())
 
         bus_stops = []
         for s in start_bus_stops:
