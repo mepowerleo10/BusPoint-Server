@@ -134,19 +134,22 @@ def get_route(request):
     else:
         cost = 500
         mid_stop = None
-        routes = [final_route]
-        stops = final_route.bus_stops.filter(
+        routes = [start_route]
+
+        start_stops = start_route.bus_stops.filter(
             stopinfo__weight=StopWeight.ROUTABLE
         ).all()
-        size = stops.count()
-        for i in range(0, size, 1):
-            locations.append([stops[i].lon, stops[i].lat])
-            bus_stops.append(stops[i])
-            print("Adding: ", stops[i].name)
-            if (stops[i].lat == float(final_stop[0])) and (stops[i].lon == float(final_stop[1])):
-                notify_stops.append(stops[i - 1])
-                print("Broke at: ", stops[i])
-                break
+        stop = Stop.objects.get(lat=start_stop[0], lon=start_stop[1])
+        s_stop_info = StopInfo.objects.get(route=start_route, stop=stop)
+        if start_route.forward:
+            start_bus_stops = \
+                start_stops.filter(stopinfo__order__gte=s_stop_info.order).distinct()
+        else:
+            start_bus_stops = \
+                reversed(
+                    start_stops.filter(stopinfo__order__lte=s_stop_info.order).distinct()
+                )
+        
 
     print(locations)
 
@@ -287,17 +290,6 @@ class GetRoute(generics.ListAPIView):
         journey.save()
 
 def getStartAndFinalStops(start_stop, overpassApi, final_stop):
-    """ q = "[out:json][timeout:25];(node[\"highway\"=\"bus_stop\"](around:10,{0},{1}););out;>;out skel qt;".format(start_stop[0], start_stop[1])
-    print(q)
-    result = overpassApi.query(q)
-    start_stop = (result.nodes[0].lat, result.nodes[0].lon)
-    print("Start: ", start_stop)
-
-    q = "[out:json][timeout:25];(node[\"highway\"=\"bus_stop\"](around:10,{0},{1}););out;>;out skel qt;".format(final_stop[0], final_stop[1])
-    result = overpassApi.query(q)
-    final_stop = (result.nodes[0].lat, result.nodes[0].lon)
-    print("End: ", final_stop) """
-
     start_stop = (
         Decimal(start_stop[0]).normalize(), 
         Decimal(start_stop[1]).normalize())
