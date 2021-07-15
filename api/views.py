@@ -12,6 +12,7 @@ from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotAllowed, JsonResponse)
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets, generics
 
 from haversine import haversine, haversine_vector, Unit
@@ -177,7 +178,7 @@ def get_route(request):
     serializer = JourneySerializer(Journey.objects.filter(id=journey.id).first())
     return JsonResponse(serializer.data, safe=True)
 
-
+@csrf_exempt
 def feedback(request):
     received_feedback = request.POST['feedback']
     user = request.POST['user']
