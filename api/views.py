@@ -50,6 +50,9 @@ def get_route(request):
 
     start_stop = (request.GET['start_lat'],request.GET['start_lon'])
     final_stop = (request.GET['final_lat'],request.GET['final_lon'])
+
+    from_loc = request.GET['from']
+    to_loc = request.GET['to']
     
     if (start_stop == None) or (final_stop == None):
         return HttpResponseBadRequest("Start and/or Final stops not set")
@@ -163,6 +166,8 @@ def get_route(request):
     print("Routing Stops: ", bus_stops)
 
     journey = Journey.objects.create(
+        from_location=from_loc,
+        to_location=to_loc,
         start_stop=start_stop_obj,
         final_stop=final_stop_obj,
         mid_stop=mid_stop,

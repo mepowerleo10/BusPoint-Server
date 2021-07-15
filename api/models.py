@@ -54,8 +54,8 @@ class Journey(models.Model):
         self.routes = routes
         self.cost = cost """
     date = models.DateTimeField(auto_now_add=True, blank=True)
-    # location_name = models.CharField(max_length=50)
-    # destination_name = models.CharField(max_length=50)
+    from_location = models.CharField(max_length=50)
+    to_location = models.CharField(max_length=50)
     start_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, 
         related_name="start_stop")
     final_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, 
