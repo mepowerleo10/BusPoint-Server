@@ -90,56 +90,47 @@ def get_route(request):
     notify_stops.append(start_route.bus_stops.all()[len(start_route.bus_stops.all()) - 1])
     if multiple_routes:
         cost = 1000
+
         start_stops = start_route.bus_stops.filter(
             stopinfo__weight=StopWeight.ROUTABLE
         ).all()
-        size = start_stops.count()
-        for i in range(0, size, 1):
-            locations.append([start_stops[i].lon, start_stops[i].lat])
-            bus_stops.append(start_stops[i])
-            print("Adding: ", start_stops[i].name)
-            if (start_stops[i].lat == mid_stop.lat) and (start_stops[i].lon == mid_stop.lon):
-                notify_stops.append(start_stops[i - 1])
-                print("Broke at: ", start_stops[i])
-                break
-            
-        # print(final_route.bus_stops.all())
-        locations.append([mid_stop.lat, mid_stop.lon])
-        bus_stops.append(mid_stop)
-        
-        # final_route.bus_stops.reverse()
+        stop = Stop.objects.get(lat=start_stop[0], lon=start_stop[1])
+        s_stop_info = StopInfo.objects.get(route=start_route, stop=stop)
+        if start_route.forward:
+            start_bus_stops = \
+                start_stops.filter(stopinfo__order__gte=s_stop_info.order).distinct()
+        else:
+            start_bus_stops = \
+                reversed(
+                    start_stops.filter(stopinfo__order__lte=s_stop_info.order).distinct()
+                )
+
         final_stops = final_route.bus_stops.filter(
             stopinfo__weight=StopWeight.ROUTABLE
         ).all()
         stop = Stop.objects.get(lat=final_stop[0], lon=final_stop[1])
-        final_stop = StopInfo.objects.get(route=final_route, stop=stop)
-        final_bus_stops = reversed(final_stops.filter(stopinfo__order__gte=final_stop.order))
-        print(final_bus_stops)
+        f_stop_info = StopInfo.objects.get(route=final_route, stop=stop)
+        if final_route.forward:
+            final_bus_stops = \
+                final_stops.filter(stopinfo__order__lte=f_stop_info.order).distinct()
+        else:
+            final_bus_stops = \
+                reversed(
+                    final_stops.filter(stopinfo__order__gte=f_stop_info.order).distinct()
+                )
+
+        bus_stops = []
+        for s in start_bus_stops:
+            bus_stops.append(s)
+
+        locations.append([mid_stop.lat, mid_stop.lon])
+        bus_stops.append(mid_stop)
+        
         for s in final_bus_stops:
             bus_stops.append(s)
-        print(bus_stops)
-        # size = final_stops.count()
-        # print(size)
-        """ if final_route.forward:
-            start = 0
-            final = size
-            inc = 1
-        else:
-            start = size - 1
-            final = -1
-            inc = -1
-        for i in range(start,final,inc):
-            print("Adding: ", final_stops[i].name)
-            # the mid stop has already been added
-            if (final_stops[i].lat == mid_stop.lat) and (final_stops[i].lon == mid_stop.lon):
-                continue
 
-            bus_stops.append(final_stops[i])
-            locations.append([final_stops[i].lon, final_stops[i].lat])
-            if (final_stops[i].lat == final_stop[0]) and (final_stops[i].lon == final_stop[1]):
-                notify_stops.append(final_stops[i+1])
-                print("Broke at: ", final_stops[i])
-                break """
+        print(bus_stops)
+
     else:
         cost = 500
         mid_stop = None
@@ -161,9 +152,9 @@ def get_route(request):
 
     # journey = Journey
     start_stop_obj = Stop.objects.filter(lat=start_stop[0], lon=start_stop[1]).first()
-    final_stop_obj = Stop.objects.filter(lat=final_stop.stop.lat, lon=final_stop.stop.lon).first()
+    final_stop_obj = Stop.objects.filter(lat=final_stop[0], lon=final_stop[1]).first()
 
-    # bus_stops.insert(0, start_stop_obj)
+    bus_stops.insert(0, start_stop_obj)
     bus_stops.append(final_stop_obj)
     print("Routing Stops: ", bus_stops)
 
