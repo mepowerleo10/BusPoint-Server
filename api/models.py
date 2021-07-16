@@ -27,6 +27,7 @@ class Route(models.Model):
     last_stripe = models.CharField(choices=RouteColors.choices(),
         default=RouteColors.WHITE, max_length=9)
     fee = models.FloatField(max_length=5)
+    fixed_fee = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

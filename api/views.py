@@ -204,6 +204,9 @@ def feedback(request):
 
 def calculate_cost(route:Route, stopInfo:StopInfo, count:int):
     cost = route.fee
+    if route.fixed_fee:
+        return cost
+
     count = StopInfo.objects.filter(route=route).count()
     if (cost >= 500) and route.forward:
         if (stopInfo.order / count) <= 0.75:
