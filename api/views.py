@@ -2,6 +2,7 @@ import csv
 import io
 import json
 import os
+import math
 
 from decimal import *
 
@@ -207,9 +208,13 @@ def calculate_cost(route:Route, stopInfo:StopInfo, count:int):
     if (cost >= 500) and route.forward:
         if (stopInfo.order / count) <= 0.75:
             cost = 0.6666 * cost
+            cost = math.round(cost / 100)
+            cost = cost * 100
     elif (cost >= 500) and (not route.forward):
         if (stopInfo.order / count) <= 1.333:
             cost =  0.666 * cost
+            cost = math.round(cost / 100)
+            cost = cost * 100
 
     return cost
 
