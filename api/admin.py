@@ -24,8 +24,8 @@ class StopInfoForm(ModelForm):
 @admin.register(StopInfo)
 class StopInfoAdmin(admin.ModelAdmin):
     form = StopInfoForm
-    search_fields = ['stop__name', 'route__name', 'weight', 'order']
-    list_display = ('stop', 'route', 'weight')
+    search_fields = ['stop__name', 'route__name', 'weight']
+    list_display = ('stop', 'route', 'weight', 'order')
     list_filter = ['weight', 'route']
 
 @admin.register(Stop)
