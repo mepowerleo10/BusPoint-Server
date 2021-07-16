@@ -351,10 +351,10 @@ def getStartAndFinalStops(start_stop, overpassApi, final_stop):
     startDistance = earthCircumference
     finalDistance = earthCircumference
 
-    stops = Stop.objects.all()
+    stops = StopInfo.objects.all().distinct()
     stopLatAndLongs = []
     for s in stops:
-        currentTuple = (float(s.lat), float(s.lon))
+        currentTuple = (float(s.stop.lat), float(s.stop.lon))
         calcStartDistance = haversine(
             start_stop, currentTuple, unit=Unit.METERS)
         calcFinalDistance = haversine(
@@ -362,11 +362,11 @@ def getStartAndFinalStops(start_stop, overpassApi, final_stop):
 
         if calcStartDistance < startDistance:
             startDistance = calcStartDistance
-            selectedStartStop = (s.lat, s.lon)
+            selectedStartStop = (s.stop.lat, s.stop.lon)
 
         if calcFinalDistance < finalDistance:
             finalDistance = calcFinalDistance
-            selectedFinalStop = (s.lat, s.lon)
+            selectedFinalStop = (s.stop.lat, s.stop.lon)
 
 
     return selectedStartStop, selectedFinalStop
