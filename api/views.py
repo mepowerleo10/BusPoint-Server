@@ -93,8 +93,6 @@ def get_route(request):
     notify_stops = []
     notify_stops.append(start_route.bus_stops.all()[len(start_route.bus_stops.all()) - 1])
     if multiple_routes:
-        cost = 1000
-
         start_stops = start_route.bus_stops.filter(
             stopinfo__weight=StopWeight.ROUTABLE
         ).all()
@@ -109,6 +107,9 @@ def get_route(request):
                     start_stops.filter(stopinfo__order__lte=s_stop_info.order).distinct()
                 )
 
+        count = StopInfo.objects.filter(route=start_route).count()
+        start_cost = calculate_cost(start_route, s_stop_info, count)
+
         final_stops = final_route.bus_stops.filter(
             stopinfo__weight=StopWeight.ROUTABLE
         ).all()
@@ -122,6 +123,10 @@ def get_route(request):
             final_bus_stops = \
                 reversed(
                     final_stops.filter(stopinfo__order__gte=f_stop_info.order).distinct())
+        count = StopInfo.objects.filter(route=final_route).count()
+        final_cost = calculate_cost(final_route, f_stop_info, count)
+
+        cost = start_cost + final_cost
 
         bus_stops = []
         for s in start_bus_stops:
@@ -136,7 +141,6 @@ def get_route(request):
         print(bus_stops)
 
     else:
-        cost = 500
         mid_stop = None
         routes = [start_route]
 
@@ -154,6 +158,8 @@ def get_route(request):
                     start_stops.filter(stopinfo__order__lte=s_stop_info.order).distinct()
                 )
         
+        count = StopInfo.objects.filter(route=start_route).count()
+        cost = calculate_cost(start_route, s_stop_info, count)
 
     print(locations)
 
@@ -190,6 +196,20 @@ def feedback(request):
     feedback = Feedback(user=user, feedback=received_feedback)
     feedback.save()
     return HttpResponse("Feedback added successfully!")
+
+def calculate_cost(route:Route, stopInfo:StopInfo, count:int):
+    cost = route.fee
+    count = StopInfo.objects.filter(route=route).count()
+    if (cost >= 500) and route.forward:
+        if (stopInfo.order / count) <= 0.75:
+            cost = 0.6666 * cost
+    elif (cost >= 500) and (not route.forward):
+        if (stopInfo.order / count) <= 1.333:
+            cost =  0.666 * cost
+
+    return cost
+
+        
 
 def get_latest_journey(request):
     journey = Journey.objects.all().last()
