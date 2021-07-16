@@ -88,6 +88,8 @@ def get_route(request):
     bus_stops = []
 
     routes = [start_route, final_route]
+    start_cost = 0
+    final_cost = 0
     cost = 0
     
     notify_stops = []
@@ -177,6 +179,8 @@ def get_route(request):
         start_stop=start_stop_obj,
         final_stop=final_stop_obj,
         mid_stop=mid_stop,
+        start_cost=start_cost,
+        final_cost=final_cost,
         cost=cost,
     )
     for s in notify_stops:

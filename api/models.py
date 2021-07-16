@@ -66,6 +66,8 @@ class Journey(models.Model):
     notify_stops = SortedManyToManyField(Stop, related_name="notify_stops")
     routing_stops = SortedManyToManyField(Stop, related_name="routing_stops")
     routes = SortedManyToManyField(Route, related_name="routes")
+    start_cost = models.FloatField(max_length=5)
+    final_cost = models.FloatField(max_length=5, default=0)
     cost = models.FloatField(max_length=5)
 
 class Feedback(models.Model):
