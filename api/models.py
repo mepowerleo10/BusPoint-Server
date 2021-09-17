@@ -26,6 +26,8 @@ class Route(models.Model):
         default=RouteColors.WHITE, max_length=9)
     last_stripe = models.CharField(choices=RouteColors.choices(),
         default=RouteColors.WHITE, max_length=9)
+    fee = models.FloatField(max_length=5)
+    fixed_fee = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -54,8 +56,8 @@ class Journey(models.Model):
         self.routes = routes
         self.cost = cost """
     date = models.DateTimeField(auto_now_add=True, blank=True)
-    # location_name = models.CharField(max_length=50)
-    # destination_name = models.CharField(max_length=50)
+    from_location = models.CharField(max_length=50)
+    to_location = models.CharField(max_length=50)
     start_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, 
         related_name="start_stop")
     final_stop = models.ForeignKey(Stop, on_delete=models.CASCADE, 
@@ -65,5 +67,12 @@ class Journey(models.Model):
     notify_stops = SortedManyToManyField(Stop, related_name="notify_stops")
     routing_stops = SortedManyToManyField(Stop, related_name="routing_stops")
     routes = SortedManyToManyField(Route, related_name="routes")
+    start_cost = models.FloatField(max_length=5)
+    final_cost = models.FloatField(max_length=5, default=0)
     cost = models.FloatField(max_length=5)
-    directions = models.JSONField(default="")
+
+class Feedback(models.Model):
+    date = models.DateTimeField(auto_now_add=True, blank=True)
+    user = models.CharField(max_length=10)
+    feedback = models.TextField()
+    checked = models.BooleanField(default=False)

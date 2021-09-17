@@ -2,6 +2,7 @@ import csv
 import io
 import json
 import os
+import math
 
 from decimal import *
 
@@ -12,10 +13,12 @@ from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
                          HttpResponseNotAllowed, JsonResponse)
 from django.shortcuts import render, get_object_or_404
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets, generics
-from routingpy import ORS, Graphhopper
 
-from .models import Route, Stop, Journey, StopWeight
+from haversine import haversine, haversine_vector, Unit
+
+from .models import Route, Stop, Journey, StopWeight, StopInfo, Feedback
 from .serializers import RouteSerializer, StopSerializer, JourneySerializer
 
 
@@ -48,6 +51,9 @@ def get_route(request):
 
     start_stop = (request.GET['start_lat'],request.GET['start_lon'])
     final_stop = (request.GET['final_lat'],request.GET['final_lon'])
+
+    from_loc = request.GET['from']
+    to_loc = request.GET['to']
     
     if (start_stop == None) or (final_stop == None):
         return HttpResponseBadRequest("Start and/or Final stops not set")
@@ -83,92 +89,99 @@ def get_route(request):
     bus_stops = []
 
     routes = [start_route, final_route]
+    start_cost = 0
+    final_cost = 0
     cost = 0
     
     notify_stops = []
     notify_stops.append(start_route.bus_stops.all()[len(start_route.bus_stops.all()) - 1])
     if multiple_routes:
-        cost = 1000
         start_stops = start_route.bus_stops.filter(
             stopinfo__weight=StopWeight.ROUTABLE
         ).all()
-        size = start_stops.count()
-        for i in range(0, size, 1):
-            locations.append([start_stops[i].lon, start_stops[i].lat])
-            bus_stops.append(start_stops[i])
-            print("Adding: ", start_stops[i].name)
-            if (start_stops[i].lat == mid_stop.lat) and (start_stops[i].lon == mid_stop.lon):
-                notify_stops.append(start_stops[i - 1])
-                print("Broke at: ", start_stops[i])
-                break
-            
-        # print(final_route.bus_stops.all())
-        locations.append([mid_stop.lat, mid_stop.lon])
-        bus_stops.append(mid_stop)
-        
-        # final_route.bus_stops.reverse()
+        stop = Stop.objects.get(lat=start_stop[0], lon=start_stop[1])
+        s_stop_info = StopInfo.objects.get(route=start_route, stop=stop)
+        if start_route.forward:
+            start_bus_stops = \
+                start_stops.filter(stopinfo__order__gte=s_stop_info.order).distinct()
+        else:
+            start_bus_stops = \
+                reversed(
+                    start_stops.filter(stopinfo__order__lte=s_stop_info.order).distinct()
+                )
+
+        count = StopInfo.objects.filter(route=start_route).count()
+        start_cost = calculate_cost(start_route, s_stop_info, count)
+
         final_stops = final_route.bus_stops.filter(
             stopinfo__weight=StopWeight.ROUTABLE
         ).all()
-        size = final_stops.count()
-        print(size)
-        for i in range(size - 1,0,-1):
-            print("Adding: ", final_stops[i].name)
-            # the mid stop has already been added
-            if (final_stops[i].lat == mid_stop.lat) and (final_stops[i].lon == mid_stop.lon):
-                continue
+        stop = Stop.objects.get(lat=final_stop[0], lon=final_stop[1])
+        f_stop_info = StopInfo.objects.get(route=final_route, stop=stop)
+        print(final_stops)
+        if final_route.forward:
+            final_bus_stops = \
+                final_stops.filter(stopinfo__order__lte=f_stop_info.order).distinct()
+        else:
+            final_bus_stops = \
+                reversed(
+                    final_stops.filter(stopinfo__order__gte=f_stop_info.order).distinct())
+        count = StopInfo.objects.filter(route=final_route).count()
+        final_cost = calculate_cost(final_route, f_stop_info, count)
 
-            bus_stops.append(final_stops[i])
-            locations.append([final_stops[i].lon, final_stops[i].lat])
-            if (final_stops[i].lat == float(final_stop[0])) and (final_stops[i].lon == float(final_stop[1])):
-                notify_stops.append(final_stops[i+1])
-                print("Broke at: ", final_stops[i])
-                break
+        cost = start_cost + final_cost
+
+        bus_stops = []
+        for s in start_bus_stops:
+            bus_stops.append(s)
+
+        locations.append([mid_stop.lat, mid_stop.lon])
+        bus_stops.append(mid_stop)
+        
+        for s in final_bus_stops:
+            bus_stops.append(s)
+
+        print(bus_stops)
+
     else:
-        cost = 500
         mid_stop = None
-        routes = [final_route]
-        stops = final_route.bus_stops.filter(
+        routes = [start_route]
+
+        start_stops = start_route.bus_stops.filter(
             stopinfo__weight=StopWeight.ROUTABLE
         ).all()
-        size = stops.count()
-        for i in range(0, size, 1):
-            locations.append([stops[i].lon, stops[i].lat])
-            bus_stops.append(stops[i])
-            print("Adding: ", stops[i].name)
-            if (stops[i].lat == float(final_stop[0])) and (stops[i].lon == float(final_stop[1])):
-                notify_stops.append(stops[i - 1])
-                print("Broke at: ", stops[i])
-                break
+        stop = Stop.objects.get(lat=start_stop[0], lon=start_stop[1])
+        s_stop_info = StopInfo.objects.get(route=start_route, stop=stop)
+        if start_route.forward:
+            start_bus_stops = \
+                start_stops.filter(stopinfo__order__gte=s_stop_info.order).distinct()
+        else:
+            start_bus_stops = \
+                reversed(
+                    start_stops.filter(stopinfo__order__lte=s_stop_info.order).distinct()
+                )
+        
+        count = StopInfo.objects.filter(route=start_route).count()
+        cost = calculate_cost(start_route, s_stop_info, count)
 
     print(locations)
-
-    """ routing_client = ORS(
-        api_key="5b3ce3597851110001cf62483a24528b22554895b20e36724d991206",
-        retry_over_query_limit=False,
-    )
-
-    # calculating the route
-    resp_route = routing_client.directions(
-        locations=locations,
-        profile='driving-car',
-        instructions=False,
-        continue_straight=True
-    )
-    calculated_route = {"geometry": resp_route.geometry, "distance": resp_route.distance, "duration": resp_route.duration} """
 
     # journey = Journey
     start_stop_obj = Stop.objects.filter(lat=start_stop[0], lon=start_stop[1]).first()
     final_stop_obj = Stop.objects.filter(lat=final_stop[0], lon=final_stop[1]).first()
 
     # bus_stops.insert(0, start_stop_obj)
-    bus_stops.append(final_stop_obj)
+    # bus_stops.append(final_stop_obj)
     print("Routing Stops: ", bus_stops)
 
     journey = Journey.objects.create(
+        from_location=from_loc,
+        to_location=to_loc,
         start_stop=start_stop_obj,
         final_stop=final_stop_obj,
         mid_stop=mid_stop,
+        start_cost=start_cost,
+        final_cost=final_cost,
         cost=cost,
     )
     for s in notify_stops:
@@ -179,9 +192,36 @@ def get_route(request):
         journey.routing_stops.add(s)
     journey.save()
     serializer = JourneySerializer(Journey.objects.filter(id=journey.id).first())
-
-    # return JsonResponse(Journey.objects.filter(id=journey.id).all(), safe=False)
     return JsonResponse(serializer.data, safe=True)
+
+@csrf_exempt
+def feedback(request):
+    received_feedback = request.POST['feedback']
+    user = request.POST['user']
+    feedback = Feedback(user=user, feedback=received_feedback)
+    feedback.save()
+    return HttpResponse("Feedback added successfully!")
+
+def calculate_cost(route:Route, stopInfo:StopInfo, count:int):
+    cost = route.fee
+    if route.fixed_fee:
+        return cost
+
+    count = StopInfo.objects.filter(route=route).count()
+    if (cost >= 500) and route.forward:
+        if (stopInfo.order / count) <= 0.75:
+            cost = 0.6666 * cost
+            cost = round(cost / 100)
+            cost = cost * 100
+    elif (cost >= 500) and (not route.forward):
+        if (stopInfo.order / count) <= 1.333:
+            cost =  0.666 * cost
+            cost = round(cost / 100)
+            cost = cost * 100
+
+    return cost
+
+        
 
 def get_latest_journey(request):
     journey = Journey.objects.all().last()
@@ -296,21 +336,40 @@ class GetRoute(generics.ListAPIView):
         journey.save()
 
 def getStartAndFinalStops(start_stop, overpassApi, final_stop):
-    q = "[out:json][timeout:25];(node[\"highway\"=\"bus_stop\"](around:10,{0},{1}););out;>;out skel qt;".format(start_stop[0], start_stop[1])
-    print(q)
-    result = overpassApi.query(q)
-    start_stop = (result.nodes[0].lat, result.nodes[0].lon)
-    print("Start: ", start_stop)
+    start_stop = (
+        Decimal(start_stop[0]).normalize(), 
+        Decimal(start_stop[1]).normalize())
+    final_stop = (
+        Decimal(final_stop[0]).normalize(), 
+        Decimal(final_stop[1]).normalize())
 
-    q = "[out:json][timeout:25];(node[\"highway\"=\"bus_stop\"](around:10,{0},{1}););out;>;out skel qt;".format(final_stop[0], final_stop[1])
-    result = overpassApi.query(q)
-    final_stop = (result.nodes[0].lat, result.nodes[0].lon)
-    print("End: ", final_stop)
+    selectedStartStop = tuple()
+    selectedFinalStop = tuple()
 
-    start_stop = (start_stop[0].normalize(), start_stop[1].normalize())
-    final_stop = (final_stop[0].normalize(), final_stop[1].normalize())
-    print(start_stop)
-    return start_stop, final_stop
+    earthCircumference = 40_030_173.59204115
+
+    startDistance = earthCircumference
+    finalDistance = earthCircumference
+
+    stops = StopInfo.objects.all().distinct()
+    stopLatAndLongs = []
+    for s in stops:
+        currentTuple = (float(s.stop.lat), float(s.stop.lon))
+        calcStartDistance = haversine(
+            start_stop, currentTuple, unit=Unit.METERS)
+        calcFinalDistance = haversine(
+            final_stop, currentTuple, unit=Unit.METERS)
+
+        if calcStartDistance < startDistance:
+            startDistance = calcStartDistance
+            selectedStartStop = (s.stop.lat, s.stop.lon)
+
+        if calcFinalDistance < finalDistance:
+            finalDistance = calcFinalDistance
+            selectedFinalStop = (s.stop.lat, s.stop.lon)
+
+
+    return selectedStartStop, selectedFinalStop
 
 def intersection(routeA, routeB):
     tupA = map(tuple, routeA)
