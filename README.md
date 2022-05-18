@@ -7,7 +7,7 @@ The server computes the routing stops using Harvesine's formula as a distance we
 
 ## Installation
 - Clone this repostiory, and enter the root of the project
-- Enable a virtual environment by using a tool of your choice i.e. `venv`
+- Enable a virtual environment by using a tool of your choice i.e. `venv`, `pipenv`, `virtualenv`
 - Run  `pip install -r requirements.txt` to fetch the requirements
 - Run `./manage.py startserver`
 
